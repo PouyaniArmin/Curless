@@ -1,0 +1,15 @@
+{
+    "name": "arminDev/curless",
+    "autoload": {
+        "psr-4": {
+            "Armin\\Curless\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "PouyaniArmin",
+            "email": "pouyaniarmin@gmail.com"
+        }
+    ],
+    "require": {}
+}
