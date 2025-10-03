@@ -1,5 +1,5 @@
 {
-    "name": "arminDev/curless",
+    "name": "armindev/curless",
     "autoload": {
         "psr-4": {
             "Armin\\Curless\\": "src/"
