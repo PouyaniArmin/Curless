@@ -17,16 +17,19 @@ class Request
     private array $files = [];
     private int $timeout = 10;
     private bool $verifySSL = true;
+    // 
     public function url(string $url)
     {
         $this->url = $url;
         return $this;
     }
+    // 
     public function method(string $method)
     {
         $this->method = strtoupper($method);
         return $this;
     }
+    // 
     public function headers(array $headers)
     {
         $this->headers = $headers;
@@ -35,14 +38,17 @@ class Request
     public function query(array $query)
     {
         $this->query = $query;
+        $this->queryHandler($query);
         return $this;
     }
+    // 
     public function body(mixed $body)
     {
         $this->body = $body;
         $this->bodyHandler($this->body);
         return $this;
     }
+    // 
     public function files(array $files)
     {
         $this->files = $files;
@@ -60,19 +66,28 @@ class Request
     }
     public function send()
     {
-        $this->curlHandler = curl_init($this->url);
+        $urlWithQuery = $this->url;
+        if (!empty($this->query)) {
+            $urlWithQuery .= $this->queryHandler();
+        }
+        $this->curlHandler = curl_init($urlWithQuery);
         $this->methodHandler($this->method);
         curl_setopt($this->curlHandler, CURLOPT_HTTPHEADER, $this->headerHandler($this->headers));
         curl_setopt($this->curlHandler, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($this->curlHandler,CURLOPT_POSTFIELDS,$this->bodyHandler($this->body));
-        $response=curl_exec($this->curlHandler);
+        if ($this->body!==null) {
+            curl_setopt($this->curlHandler, CURLOPT_POSTFIELDS, $this->bodyHandler($this->body));
+            
+        }
+        curl_setopt($this->curlHandler, CURLOPT_SSL_VERIFYPEER, $this->verifySSL);
+        curl_setopt($this->curlHandler, CURLOPT_SSL_VERIFYHOST, $this->verifySSL ? 2 : 0);
+        curl_setopt($this->curlHandler, CURLOPT_TIMEOUT, $this->timeout);
+        $response = curl_exec($this->curlHandler);
         if (curl_errno($this->curlHandler)) {
             throw new Exception("Error:" . $this->curlHandler);
         }
         curl_close($this->curlHandler);
         return $response;
     }
-
     private function methodHandler($method)
     {
         if (isset($method)) {
@@ -138,7 +153,6 @@ class Request
         if ($contetType === 'multipart/form-data') {
             return $this->fileHandler($this->files);
         }
-        
     }
 
     private function fileHandler(array $files)
@@ -152,5 +166,23 @@ class Request
         }
 
         return $result;
+    }
+    private function queryHandler(): string
+    {
+        $lenght = count($this->query);
+        $parameter = '?';
+        if ($lenght === 1) {
+            foreach ($this->query as $key => $value) {
+                $parameter .= urlencode($key) . '=' . urlencode($value);
+            }
+        } elseif ($lenght > 1) {
+            foreach ($this->query as $key => $value) {
+                $parameter .= urlencode($key) . '=' . urlencode($value) . '&';
+            }
+            $parameter = substr($parameter, 0, -1);
+        } else {
+            throw new Exception("Error: " . curl_error($this->curlHandler));
+        }
+        return $parameter;
     }
 }
