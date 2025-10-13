@@ -8,7 +8,7 @@ use Exception;
 
 class Request
 {
-    private CurlHandle $curlHandler;
+    private ?CurlHandle $curlHandler=null;
     private string $url;
     private string $method;
     private array $headers = [];
@@ -38,14 +38,12 @@ class Request
     public function query(array $query)
     {
         $this->query = $query;
-        $this->queryHandler($query);
         return $this;
     }
     // 
     public function body(mixed $body)
     {
         $this->body = $body;
-        $this->bodyHandler($this->body);
         return $this;
     }
     // 
@@ -83,7 +81,7 @@ class Request
         curl_setopt($this->curlHandler, CURLOPT_TIMEOUT, $this->timeout);
         $response = curl_exec($this->curlHandler);
         if (curl_errno($this->curlHandler)) {
-            throw new Exception("Error:" . $this->curlHandler);
+            throw new Exception("cURL Error: " . curl_error($this->curlHandler));
         }
         curl_close($this->curlHandler);
         return $response;
@@ -98,21 +96,15 @@ class Request
                     break;
                 case 'POST':
                     curl_setopt($this->curlHandler, CURLOPT_POST, true);
-                    if (isset($this->body)) {
-                        curl_setopt($this->curlHandler, CURLOPT_POSTFIELDS, $this->body);
-                    }
+                    
                     break;
                 case 'PUT':
                     curl_setopt($this->curlHandler, CURLOPT_CUSTOMREQUEST, 'PUT');
-                    if (isset($this->body)) {
-                        curl_setopt($this->curlHandler, CURLOPT_POSTFIELDS, $this->body);
-                    }
+                    
                     break;
                 case 'DELETE':
                     curl_setopt($this->curlHandler, CURLOPT_CUSTOMREQUEST, 'DELETE');
-                    if (isset($this->body)) {
-                        curl_setopt($this->curlHandler, CURLOPT_POSTFIELDS, $this->body);
-                    }
+                    
                     break;
                 default:
                     $method = 'GET';
@@ -134,30 +126,24 @@ class Request
 
     private function bodyHandler(mixed $data)
     {
-        $contetType = $this->headers['Content-Type'] ?? '';
-        if ($contetType === 'application/json') {
-            $response = json_encode($data, JSON_PRETTY_PRINT);
+        $contentType = $this->headers['Content-Type'] ?? '';
+        if ($contentType === 'application/json') {
+            $response = json_encode($data,JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             return $response;
         }
-        if ($contetType === 'application/x-www-form-urlencoded') {
-            $test = '';
-            if (is_array($data)) {
-                foreach ($data as $key => $value) {
-                    $test .= $key . "=" . $value . '&';
-                }
-            } else {
-                throw new Exception("Error: Data body invalied");
-            }
-            return substr($test, 0, -1);
+        if ($contentType === 'application/x-www-form-urlencoded') {
+            return http_build_query($data);
+            
         }
-        if ($contetType === 'multipart/form-data') {
+        if ($contentType === 'multipart/form-data') {
             return $this->fileHandler($this->files);
         }
+        return null;
     }
 
     private function fileHandler(array $files)
     {
-        $result = $this->body;
+        $result = is_array($this->body) ? $this->body : [];
         foreach ($files as $field => $path) {
             if (!file_exists($path)) {
                 throw new Exception("File not found: $path");
@@ -169,20 +155,6 @@ class Request
     }
     private function queryHandler(): string
     {
-        $lenght = count($this->query);
-        $parameter = '?';
-        if ($lenght === 1) {
-            foreach ($this->query as $key => $value) {
-                $parameter .= urlencode($key) . '=' . urlencode($value);
-            }
-        } elseif ($lenght > 1) {
-            foreach ($this->query as $key => $value) {
-                $parameter .= urlencode($key) . '=' . urlencode($value) . '&';
-            }
-            $parameter = substr($parameter, 0, -1);
-        } else {
-            throw new Exception("Error: " . curl_error($this->curlHandler));
-        }
-        return $parameter;
+        return !empty($this->query)? '?'. http_build_query($this->query):'';
     }
 }
