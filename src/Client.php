@@ -7,7 +7,7 @@ use CurlHandle;
 class Client
 {
     protected Request $request;
-
+    protected Response $response;
     public function request(string $method, string $url)
     {
         $this->request = new Request;
@@ -48,5 +48,32 @@ class Client
     public function send()
     {
         return $this->request->send();
+    }
+
+    public function response(array $data)
+    {
+        $this->response = new Response($data);
+        return $this;
+    }
+    public function getBody()
+    {
+        return $this->response->bodyInfo();
+    }
+
+    public function getHeaders()
+    {
+        return $this->response->headerInfo();
+    }
+    public function getStatus()
+    {
+        return $this->response->status();
+    }
+    
+    public function getInfo()
+    {
+        return $this->response->info();
+    }
+    public function json(){
+        return $this->response->json();
     }
 }
