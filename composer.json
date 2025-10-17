@@ -1,5 +1,8 @@
 {
     "name": "armindev/curless",
+    "description": "A simple PHP library to make HTTP requests using cURL in an easy and elegant way",
+    "type": "library",
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "Armin\\Curless\\": "src/"
@@ -11,5 +14,7 @@
             "email": "pouyaniarmin@gmail.com"
         }
     ],
-    "require": {}
+    "require": {},
+    "minimum-stability": "dev",
+    "prefer-stable": true
 }
