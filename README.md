@@ -3,6 +3,14 @@
 A simple PHP library to make HTTP requests using cURL in an easy and elegant way. 
 It provides classes `Request`, `Response`, and `Client` to simplify sending requests, handling responses, and working with headers, body, files, and query parameters.
 
+## Installation
+
+You can install `curless` via Composer:
+
+```bash
+composer require armindev/curless
+```
+
 ## Usage
 
 ### Basic GET Request
