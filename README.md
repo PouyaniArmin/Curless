@@ -10,7 +10,6 @@ You can install `curless` via Composer:
 ```bash
 composer require armindev/curless
 ```
-
 ## Usage
 
 ### Basic GET Request
